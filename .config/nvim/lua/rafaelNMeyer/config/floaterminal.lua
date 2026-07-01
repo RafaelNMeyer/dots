@@ -34,10 +34,6 @@ local function open_bottom_win()
   state.window_id = vim.api.nvim_get_current_win()
   vim.api.nvim_win_set_config(state.window_id, state.window.bottom)
   vim.api.nvim_win_set_buf(state.window_id, state.buf)
-  vim.opt.laststatus = 0
-  vim.opt.showmode = false
-  vim.opt.ruler = false
-  vim.opt.showcmd = false
 end
 
 local function save_last_win_config()
@@ -72,7 +68,7 @@ end
 local function toggle_terminal(arg)
   create_buf()
   close_window()
-  local stat
+  local stat = status.CLOSED
   if arg ~= state.status then
     if arg == status.FLOATING then
       open_floating_win()
