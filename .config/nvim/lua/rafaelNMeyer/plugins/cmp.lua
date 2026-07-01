@@ -11,11 +11,32 @@ return {
     local capabilities = require("cmp_nvim_lsp").default_capabilities()
     local lspconfig = require('lspconfig')
     local servers = {
-      { name = 'clangd',        settings = {} },
-      { name = 'zls',           settings = {} },
-      { name = 'rust_analyzer', settings = {} },
-      { name = 'ts_ls',         settings = {} },
-      { name = 'gopls',         settings = {} },
+      { name = 'clangd', settings = {} },
+      { name = 'zls',    settings = {} },
+      {
+        name = 'rust_analyzer',
+        settings = {
+          ["rust-analyzer"] = {
+            imports = {
+              granularity = {
+                group = "module",
+              },
+              prefix = "self",
+            },
+            cargo = {
+              buildScripts = {
+                enable = true,
+              },
+            },
+            procMacro = {
+              enable = true
+            },
+          },
+        },
+      },
+      { name = 'ts_ls', settings = {} },
+      { name = 'gopls', settings = {} },
+      { name = 'zls',   settings = {} },
       {
         name = 'bashls',
         settings = {
@@ -32,7 +53,7 @@ return {
         settings = {
           Lua = {
             runtime = {
-              version = "LuaJIT"
+              version = "lua5.4"
             },
             workspace = {
               checkThirdParty = false,
@@ -76,11 +97,31 @@ return {
     }
 
     for _, lsp in ipairs(servers) do
-      lspconfig[lsp.name].setup {
-        -- on_attach is at lsp file
+      local opts = {
         settings = lsp.settings,
         capabilities = capabilities,
       }
+
+      if lsp.name == 'rust_analyzer' then
+        opts.single_file_support = true
+        opts.root_dir = function(fname)
+          local cargo_root = require('lspconfig.util').root_pattern('Cargo.toml')(fname)
+          return cargo_root or vim.fn.fnamemodify(fname, ':h')
+        end
+        opts.on_init = function(client)
+          local root = client.config.root_dir
+          local has_cargo = vim.fn.filereadable(root .. '/Cargo.toml') == 1
+          if not has_cargo then
+            local bufname = vim.api.nvim_buf_get_name(0)
+            client.config.settings["rust-analyzer"].detachedFiles = { bufname }
+            client.notify("workspace/didChangeConfiguration", {
+              settings = client.config.settings
+            })
+          end
+        end
+      end
+
+      lspconfig[lsp.name].setup(opts)
     end
     -- luasnip setup
     local luasnip = require 'luasnip'
