@@ -14,9 +14,10 @@ do
     M=$(free | grep Mem | awk '{printf "MEM:%d%%", ($3/$2) * 100}')
     L=$(cat /sys/class/backlight/nvidia_0/brightness)
     L="BRI:$L%"
-    T=$(bluetoothctl info AC:80:0A:75:9E:47 | grep Battery | grep -o '(.*)' | sed 's/[()]//g')
+		T=$(bluetoothctl info $(bluetoothctl devices Connected | awk -F ' ' '{print $2}') | grep Battery | grep -o '(.*)' | sed 's/[()]//g')
 		T="🎧:$T%"
-    xsetroot -name "$(printf ' %b %b  %b  %b  %b  %b  %b ' "$F" "$M" "$V" "$L" "$B" "$T" "$D")"
+		K="[$(~/.scripts/keyboard_layout.sh)]"
+    xsetroot -name "$(printf ' %b %b %b  %b  %b  %b  %b  %b ' "$K" "$F" "$M" "$V" "$L" "$B" "$T" "$D")"
 
     sleep 1s
 done &
